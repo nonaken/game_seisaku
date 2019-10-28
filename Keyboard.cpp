@@ -1,9 +1,10 @@
 #include "DxLib.h"
 
-static int m_Key[256];  // キーの入力状態格納用変数
+int m_Key[256];  // キーの入力状態格納用変数
 
 // キーの入力状態更新
-void Keyboard_Update() {
+int Keyboard_Update() {
+
 	char tmpKey[256];             // 現在のキーの入力状態を格納する
 	GetHitKeyStateAll(tmpKey);  // 全てのキーの入力状態を得る
 	for (int i = 0; i < 256; i++) {
@@ -14,9 +15,11 @@ void Keyboard_Update() {
 			m_Key[i] = 0; // 0にする
 		}
 	}
+	return 0;
 }
 
 // KeyCodeのキーの入力状態を取得する
 int Keyboard_Get(int KeyCode) {
+
 	return m_Key[KeyCode]; // KeyCodeの入力状態を返す
 }

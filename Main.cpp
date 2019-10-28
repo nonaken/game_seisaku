@@ -1,11 +1,12 @@
 //##########ヘッダーファイル読み込み ##########
 #include "DxLib.h"
-#include "FPS.hpp"
-#include "Keyboard.hpp"
+#include "FPS.h"
+#include "Keyboard.h"
 #include <math.h>
 
 //########## マクロ定義 ##########
 #define GAME_WIDTH	1280		//画面の横の大きさ
+#define GAME_MIN_WIDTH 0
 #define GAME_HEIGHT 950		//画面の縦の大きさ
 #define GAME_COLOR	32		//画面のカラービット
 
@@ -19,10 +20,13 @@
 
 #define GAME_FPS_SPEED					   60
 
-#define GAME_BackImage_TITLE	"BackImage\\宇宙.jpg"			//背景画像
+#define GAME_BackImage_TITLE	"BackImage\\宇宙.jpg"			//タイトル画面背景画像
+#define GAME_BackImage_PLAY		"BackImage\\pipo-battlebg017b.jpg"	//プレイ画面背景画像
+#define GAME_CharaImage_PLAY	"クリスマスキャラチップ\\pipo-xmaschara05.png"			//キャラクター画像
 
+#define GAME_Chara_Set_X		250		//キャラクターの初期X位置
+#define GAME_Chara_Set_Y		500		//キャラクターの初期X位置
 
-#define GAME_CharaImage_TITLE	"クリスマスキャラチップ\\pipo-xmaschara05.png"			//背景画像
 //列挙型で各画面を管理
 enum GameState
 {
@@ -40,6 +44,8 @@ void DrawGameTitle();
 void DrawGamePlay();
 //void DrawGameClear();
 void DrawGameEnd();
+
+
 
 //########## プログラムで最初に実行される関数 ##########
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -59,7 +65,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	FPS *fps = new FPS(GAME_FPS_SPEED);							//FPSクラスのオブジェクトを生成
 
-	
+	//Charaの画像を描画
+
+	int Chara[12];
+	int Chara_X = 0, Chara_Y = 0;
+	int Chara_soeji = 0;
+	LoadDivGraph(GAME_CharaImage_PLAY, 12, 3, 5, 32, 32, Chara);
+
 	
 	while (TRUE)	//無限ループ
 	{
@@ -74,8 +86,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		case GAME_TITLE:
 			DrawGameTitle();
 			break;
+
 		case GAME_PLAY:
 			DrawGamePlay();
+
+
+			//左矢印キーを押し続けたら
+			if (Keyboard_Get(KEY_INPUT_LEFT) >= 1)
+			{
+				Chara_soeji = 3;
+				//キャラクターのX座標が左画面外に行かないように移動する
+				if (GAME_Chara_Set_X + Chara_X >= GAME_MIN_WIDTH) 
+				{
+					Chara_X -= 5;
+				}
+			}
+
+			//右矢印キーを押し続けたら
+			if (Keyboard_Get(KEY_INPUT_RIGHT) >= 1)
+			{
+				Chara_soeji = 6;
+				//キャラクターのX座標が右画面外に行かないように移動する
+				if (Chara_X <= GAME_WIDTH - GAME_Chara_Set_X)
+				{
+					Chara_X += 5;
+				}
+			}
+
+			//左矢印キーと右矢印キーを同時押ししたら
+			if (Keyboard_Get(KEY_INPUT_LEFT) >= 1 && Keyboard_Get(KEY_INPUT_RIGHT) >= 1)
+			{
+				Chara_soeji = 0;
+			}
+			
+			//プレイ画面のとき、キャラクターを拡大して描画
+			DrawRotaGraph(GAME_Chara_Set_X + Chara_X, GAME_Chara_Set_Y + Chara_Y, 3.0, 0.0, Chara[Chara_soeji], TRUE);
+
 			break;
 		//case GAME_CLEAR:
 			//DrawGameClear();
@@ -86,6 +132,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		default:
 			break;
 		}
+
+		
 
 		//MY_ALL_KEYDOWN_UPDATE();				//キーの状態を取得
 
@@ -115,10 +163,10 @@ void DrawGameTitle()
 {
 
 	// 背景の画像を読み込む
-	int imgBack = LoadGraph(GAME_BackImage_TITLE);
+	int imgBack_Title = LoadGraph(GAME_BackImage_TITLE);
 
 	// 背景の画像を描画
-	DrawExtendGraph(0, 0, GAME_WIDTH, GAME_HEIGHT, imgBack, false);
+	DrawExtendGraph(0, 0, GAME_WIDTH, GAME_HEIGHT, imgBack_Title, false);
 
 
 	int FontHandle_TITLE = CreateFontToHandle(NULL, 120, 3);			//文字の大きさ変更
@@ -127,9 +175,12 @@ void DrawGameTitle()
 	DrawString(0, 20, "Enterキーを押して下さい(プレイ画面へ遷移します)", GetColor(0, 255, 255));
 
 	//エンターキーが押されたら
-	if (Keyboard_Get(KEY_INPUT_RETURN) == 1)
+	if (Keyboard_Update() == 0)
 	{
-		gamestate_senni = GAME_PLAY;//シーンをゲーム画面に変更
+		if (Keyboard_Get(KEY_INPUT_RETURN) == 1)
+		{
+			gamestate_senni = GAME_PLAY;//シーンをゲーム画面に変更
+		}
 	}
 
 
@@ -140,9 +191,17 @@ void DrawGameTitle()
 //プレイ画面の設定
 void DrawGamePlay()
 {
-	int FontHandle_PLAY = CreateFontToHandle(NULL, 20, 3);			//文字の大きさ変更
-	DrawString(0, 20, "Spaceキーを押して下さい(エンド画面へ遷移します)", GetColor(0, 255, 255));
-	DrawStringToHandle(0, 40, "矢印キーで移動してね！(上矢印キーは攻撃ボタンだよ！)", GetColor(0, 155, 155), FontHandle_PLAY);
+
+	// 背景の画像を読み込む
+	int imgBack_Play = LoadGraph(GAME_BackImage_PLAY);
+
+	// 背景の画像を描画
+	DrawExtendGraph(0, 0, GAME_WIDTH, GAME_HEIGHT, imgBack_Play, false);
+
+	int FontHandle_PLAY = CreateFontToHandle(NULL, 30, 3);			//文字の大きさ変更
+	DrawString(0, 20, "Spaceキーを押して下さい(エンド画面へ遷移します)", GetColor(255, 0, 0));
+	DrawStringToHandle(0, 40, "矢印キーで移動してね！(上矢印キーは攻撃ボタンだよ！)", GetColor(255, 0, 0), FontHandle_PLAY);
+	
 
 	//スペースキーが押されたら
 	if (Keyboard_Get(KEY_INPUT_SPACE) == 1)
