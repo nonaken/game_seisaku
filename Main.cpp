@@ -2,11 +2,17 @@
 #include "DxLib.h"
 #include "FPS.h"
 #include "Keyboard.h"
-#include <math.h>
+#include "CHARA.h"
+//#include "Ball.h"
+
+//#include <cstdlib>
+//#include <ctime>
+
+//#include <math.h>
 
 //########## マクロ定義 ##########
-#define GAME_WIDTH	1280		//画面の横の大きさ
-#define GAME_MIN_WIDTH 0
+#define GAME_WIDTH	1280		//画面の横の大きさ(画面右端の限界値)
+#define GAME_MIN_WIDTH 0		//画面左端の限界値
 #define GAME_HEIGHT 950		//画面の縦の大きさ
 #define GAME_COLOR	32		//画面のカラービット
 
@@ -23,9 +29,11 @@
 #define GAME_BackImage_TITLE	"BackImage\\宇宙.jpg"			//タイトル画面背景画像
 #define GAME_BackImage_PLAY		"BackImage\\pipo-battlebg017b.jpg"	//プレイ画面背景画像
 #define GAME_CharaImage_PLAY	"クリスマスキャラチップ\\pipo-xmaschara05.png"			//キャラクター画像
+#define GAME_BackImage_END		"BackImage\\pipo-battlebg020b.jpg"	//エンド画面背景画像
+#define GAME_Chara_Set_X		GAME_WIDTH / 2		//キャラクターの初期X位置(中央)
+#define GAME_Chara_Set_Y		700		//キャラクターの初期X位置
 
-#define GAME_Chara_Set_X		250		//キャラクターの初期X位置
-#define GAME_Chara_Set_Y		500		//キャラクターの初期X位置
+#define GAME_BallImage_Play		"BackImage\\Bowling-Ball-Vector-Set.jpg"		//プレイ画面で使うボールの画像
 
 //列挙型で各画面を管理
 enum GameState
@@ -65,14 +73,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	FPS *fps = new FPS(GAME_FPS_SPEED);							//FPSクラスのオブジェクトを生成
 
-	//Charaの画像を描画
 
-	int Chara[12];
-	int Chara_X = 0, Chara_Y = 0;
-	int Chara_soeji = 0;
-	LoadDivGraph(GAME_CharaImage_PLAY, 12, 3, 5, 32, 32, Chara);
+	//動的領域を確保する
+	CHARA *c = new CHARA();
 
-	
+	LoadDivGraph(GAME_CharaImage_PLAY, 12, 3, 5, 32, 32, &c->Handle[0]);	//読み込む画像の分割数や大きさ
+
+	/*
+	std::srand((unsigned int)time(NULL));
+	int x = rand()% 6;
+	*/
+
 	while (TRUE)	//無限ループ
 	{
 
@@ -81,6 +92,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (ClearDrawScreen() != 0) { break; }	//画面を消去できなかったとき、強制終了
 
 		
+		Keyboard_Update();   //キーボードの更新
+
+		fps->Update();		//FPSの処理[更新]
+
 		switch (gamestate_senni)
 		{
 		case GAME_TITLE:
@@ -94,33 +109,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//左矢印キーを押し続けたら
 			if (Keyboard_Get(KEY_INPUT_LEFT) >= 1)
 			{
-				Chara_soeji = 3;
+				c->Chara_soeji = 3;
 				//キャラクターのX座標が左画面外に行かないように移動する
-				if (GAME_Chara_Set_X + Chara_X >= GAME_MIN_WIDTH) 
+				if (GAME_Chara_Set_X + c->Chara_X >= GAME_MIN_WIDTH) 
 				{
-					Chara_X -= 5;
+					c->Chara_X -= 5;
 				}
 			}
 
 			//右矢印キーを押し続けたら
 			if (Keyboard_Get(KEY_INPUT_RIGHT) >= 1)
 			{
-				Chara_soeji = 6;
+				c->Chara_soeji = 6;
 				//キャラクターのX座標が右画面外に行かないように移動する
-				if (Chara_X <= GAME_WIDTH - GAME_Chara_Set_X)
+				if (c->Chara_X <= GAME_WIDTH - GAME_Chara_Set_X)
 				{
-					Chara_X += 5;
+					c->Chara_X += 5;
 				}
 			}
 
 			//左矢印キーと右矢印キーを同時押ししたら
 			if (Keyboard_Get(KEY_INPUT_LEFT) >= 1 && Keyboard_Get(KEY_INPUT_RIGHT) >= 1)
 			{
-				Chara_soeji = 0;
+				c->Chara_soeji = 0;
 			}
 			
 			//プレイ画面のとき、キャラクターを拡大して描画
-			DrawRotaGraph(GAME_Chara_Set_X + Chara_X, GAME_Chara_Set_Y + Chara_Y, 3.0, 0.0, Chara[Chara_soeji], TRUE);
+			DrawRotaGraph(GAME_Chara_Set_X + c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 3.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
+
+			
+			
+			
 
 			break;
 		//case GAME_CLEAR:
@@ -137,9 +156,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		//MY_ALL_KEYDOWN_UPDATE();				//キーの状態を取得
 
-		Keyboard_Update();   //キーボードの更新
 
-		fps->Update();		//FPSの処理[更新]
 
 		fps->Draw(0, 0);	//FPSの処理[描画]
 
@@ -150,7 +167,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 
-
+	delete c;
 	delete fps;				//FPSを破棄
 	
 	DxLib_End();			//ＤＸライブラリ使用の終了処理
@@ -179,7 +196,7 @@ void DrawGameTitle()
 	{
 		if (Keyboard_Get(KEY_INPUT_RETURN) == 1)
 		{
-			gamestate_senni = GAME_PLAY;//シーンをゲーム画面に変更
+			gamestate_senni = GAME_PLAY;	//シーンをゲーム画面に変更
 		}
 	}
 
@@ -215,10 +232,20 @@ void DrawGamePlay()
 //エンド画面の設定
 void DrawGameEnd()
 {
+
+
+	// 背景の画像を読み込む
+	int imgBack_End = LoadGraph(GAME_BackImage_END);
+
+	// 背景の画像を描画
+	DrawExtendGraph(0, 0, GAME_WIDTH, GAME_HEIGHT, imgBack_End, false);
+
 	int FontHandle_END = CreateFontToHandle(NULL, 20, 3);			//文字の大きさ変更
 	DrawString(0, 20, "BackSpaceキーを押して下さい(タイトル画面へ遷移します)", GetColor(0, 255, 255));
 	DrawStringToHandle(0, 40, "お疲れさまでした！また挑戦してね！", GetColor(0, 155, 155), FontHandle_END);
 
+
+	
 	//スペースキーが押されたら
 	if (Keyboard_Get(KEY_INPUT_BACK) == 1)
 	{

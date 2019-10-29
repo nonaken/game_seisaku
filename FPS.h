@@ -4,8 +4,6 @@
 /* FPS(Flame Per Second)クラス																	   */
 /* 一つのインスタンスのみにする																	   */
 
-#pragma once
-
 //########## ヘッダーファイル読み込み ##########
 #include "DxLib.h"
 
