@@ -145,14 +145,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Ball.cpp" />
+    <ClCompile Include="EnemyCharacter.cpp" />
     <ClCompile Include="CHARA.cpp" />
     <ClCompile Include="FPS.cpp" />
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Ball.h" />
+    <ClInclude Include="EnemyCharacter.h" />
     <ClInclude Include="CHARA.h" />
     <ClInclude Include="FPS.h" />
     <ClInclude Include="Keyboard.h" />
