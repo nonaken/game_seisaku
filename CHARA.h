@@ -16,3 +16,18 @@ public:
 	CHARA();
 	~CHARA();
 };
+
+class ATTACK:CHARA
+{
+public:
+	int A_Handle[12];
+	int A_X = Chara_X;
+	int A_Y = Chara_Y;
+	int A_soeji = 0;
+
+	/*
+	ATTACK();
+	~ATTACK();
+	*/
+};
+

@@ -83,7 +83,7 @@ VOID FPS::Update(VOID)
 VOID FPS::Draw(int drawX, int drawY)
 {
 	//•¶Žš—ñ‚ð•`‰æ
-	DrawFormatString(drawX, drawY, GetColor(255, 255, 255), "FPS:%.1f", this->drawValue);
+	DrawFormatString(drawX, drawY, GetColor(0, 255, 0), "FPS:%.1f", this->drawValue);
 	return;
 }
 

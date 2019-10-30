@@ -9,3 +9,12 @@ CHARA::~CHARA()
 {
 }
 
+/*
+ATTACK::ATTACK()
+{
+}
+
+ATTACK::~ATTACK()
+{
+}
+*/
