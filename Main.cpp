@@ -10,18 +10,20 @@
 
 
 
-
 //#include <cstdlib>
 //#include <ctime>
 
 #include <math.h>
 
 //########## マクロ定義 ##########
-#define GAME_WIDTH	1280		//画面の横の大きさ(画面右端の限界値)
-#define GAME_MIN_WIDTH 0		//画面左端の限界値
-#define GAME_HEIGHT 950			//画面の縦の大きさ
+#define GAME_WIDTH		1280	//画面の横の大きさ(画面右端の限界値)
+#define GAME_MIN_WIDTH	 0		//画面左端の限界値
+#define GAME_HEIGHT		950		//画面の縦の大きさ
 #define GAME_MIN_HEIGHT 0		//画面上の限界値
-#define GAME_COLOR	32			//画面のカラービット
+#define GAME_COLOR		32		//画面のカラービット
+
+#define GAME_WIDTH_CENTER_X		GAME_WIDTH / 2		//画面の半分の長さ
+#define GAME_HEIGHT_CENTER_Y	GAME_HEIGHT / 2		//画面の半分の高さ
 
 #define GAME_WINDOW_NAME	"GAME PLAY!"		//ウィンドウのタイトル
 #define GAME_WINDOW_MODECHANGE	TRUE			//TRUE：ウィンドウモード / FALSE：フルスクリーン
@@ -33,11 +35,11 @@
 
 #define GAME_FPS_SPEED					   60
 
-#define GAME_BackImage_TITLE	"BackImage\\宇宙.jpg"			//タイトル画面背景画像
+#define GAME_BackImage_TITLE	"BackImage\\pipo-battlebg010b.jpg"			//タイトル画面背景画像
 
 #define GAME_BackImage_PLAY		"BackImage\\pipo-battlebg002b.jpg"	//プレイ画面背景画像
 #define GAME_CharaImage_PLAY	"クリスマスキャラチップ\\雪だるま_透過処理.png"			//キャラクター画像
-#define GAME_CharaImage_PLAY_ATTACK "クリスマスキャラチップ\\pipo-xmaschara06.png"		//攻撃画像
+#define GAME_CharaImage_PLAY_ATTACK "クリスマスキャラチップ\\攻撃(赤雪だるま)_透過処理.png"		//攻撃画像
 #define GAME_BallImage_Play		"Enemy\\骨_透過処理.png"		//プレイ画面で使うボールの画像
 
 #define GAME_BackImage_END		"BackImage\\pipo-battlebg020b.jpg"	//エンド画面背景画像
@@ -58,6 +60,8 @@
 
 #define CHARA_SIZE_X	96		//キャラクターのXサイズ
 #define CHARA_SIZE_Y	96		//キャラクターのYサイズ
+#define ATTACK_SIZE_X	96		//キャラクターのXサイズ
+#define ATTACK_SIZE_Y	96		//キャラクターのYサイズ
 #define HONE_SIZE_X		96		//エネミーのXサイズ
 #define HONE_SIZE_Y		96		//エネミーのYサイズ
 
@@ -91,7 +95,7 @@ void DrawGamePlay();
 //void DrawGameClear();
 void DrawGameEnd();
 
-int RANDOM();	//乱数を生成する関数
+int WINDOW_WIDTH_RANDOM();	//乱数を生成する関数
 
 
 
@@ -123,19 +127,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	int ATTACK_flag = false;	//攻撃中か攻撃していないかを判断するフラグ
 	int Enemy_flag = false;		//敵が画面外にいるのか、いないのかを判断する
+
 	int Chara_Size, Attack_Size, Enemy_Size;	//画像の横と縦のサイズを調べるための変数
 	int Chara_Size_W, Chara_Size_H, Attack_Size_W, Attack_Size_H, Enemy_Size_W, Enemy_Size_H;	//画像の横、縦のサイズを記憶する
 	
 	LoadDivGraph(GAME_CharaImage_PLAY, CHARA_Divide_All, CHARA_Divide_Size_W, CHARA_Divide_Size_H, CHARA_SIZE_X, CHARA_SIZE_Y, &c->Handle[0]);	//キャラ画像の分割数、大きさ、ハンドル値を設定
-	LoadDivGraph(GAME_CharaImage_PLAY_ATTACK, ATTACK_Divide_All, ATTACK_Divide_Size_W, ATTACK_Divide_Size_H, 32, 32, &a->A_Handle[0]);	//攻撃画像の分割数、大きさ、ハンドル値を設定
-	LoadDivGraph(GAME_BallImage_Play, ENEMY_Divide_All, Enemy_Divide_Size_W, Enemy_Divide_Size_H, HONE_SIZE_X, HONE_SIZE_X, &e->Enemy_Handle[0]);	//エネミー画像の分割数、大きさ、ハンドル値を設定
+	LoadDivGraph(GAME_CharaImage_PLAY_ATTACK, ATTACK_Divide_All, ATTACK_Divide_Size_W, ATTACK_Divide_Size_H, ATTACK_SIZE_X, ATTACK_SIZE_Y, &a->A_Handle[0]);	//攻撃画像の分割数、大きさ、ハンドル値を設定
+	LoadDivGraph(GAME_BallImage_Play, ENEMY_Divide_All, Enemy_Divide_Size_W, Enemy_Divide_Size_H, HONE_SIZE_X, HONE_SIZE_Y, &e->Enemy_Handle[0]);	//エネミー画像の分割数、大きさ、ハンドル値を設定
 
-	Chara_Size = LoadGraph(GAME_CharaImage_PLAY);	//キャラ画像　の縦と横のサイズを取得するためロードする(すぐに捨てる)
-	Enemy_Size = LoadGraph(GAME_BallImage_Play);	//エネミー画像の縦と横のサイズを取得するためロードする(すぐに捨てる)
+	Chara_Size = LoadGraph(GAME_CharaImage_PLAY);			//キャラ画像　の縦と横のサイズを取得するためロードする(すぐに捨てる)
+	Attack_Size = LoadGraph(GAME_CharaImage_PLAY_ATTACK);	//攻撃(キャラクター)画像の縦と横のサイズを取得するためロードする(すぐに捨てる)
+	Enemy_Size = LoadGraph(GAME_BallImage_Play);			//エネミー画像の縦と横のサイズを取得するためロードする(すぐに捨てる)
+	
+
 	GetGraphSize(Chara_Size, &Chara_Size_W, &Chara_Size_H);	//キャラ画像　の縦と横のサイズを取得
+	GetGraphSize(Attack_Size, &Attack_Size_W, &Attack_Size_H); //攻撃(キャラクター)画像の縦と横のサイズを取得
 	GetGraphSize(Enemy_Size, &Enemy_Size_W, &Enemy_Size_H); //エネミー画像の縦と横のサイズを取得
 
 	DeleteGraph(Chara_Size);//キャラ画像　の縦と横のサイズを取得したら、使い捨て
+	DeleteGraph(Attack_Size);//キャラ画像　の縦と横のサイズを取得したら、使い捨て
 	DeleteGraph(Enemy_Size);//エネミー画像の縦と横のサイズを取得したら、使い捨て
 
 
@@ -166,7 +176,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//エネミーが画面外にいるなら
 			if (Enemy_flag == false)
 			{
-				e->Enemy_X = RANDOM();
+				e->Enemy_X = WINDOW_WIDTH_RANDOM();
 				Enemy_flag = true;
 			}
 
@@ -244,7 +254,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//攻撃していたら
 			if (ATTACK_flag == true)
 			{
-				DrawRotaGraph(GAME_Chara_Set_X + a->A_X, GAME_Chara_Set_Y + a->A_Y, 3.0, 0.0, a->A_Handle[a->A_soeji], TRUE);
+				DrawRotaGraph(GAME_Chara_Set_X + a->A_X, GAME_Chara_Set_Y + a->A_Y, 1.0, 0.0, a->A_Handle[a->A_soeji], TRUE);
 				a->A_Y -= GAME_ATTACK_Y;
 
 			}
@@ -266,12 +276,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				c->Chara_X = RESET_CHARA;
 				c->Chara_Y = RESET_CHARA;
 
-				e->Enemy_X = RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
+				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
 				e->Enemy_Y = RESET_ENEMY;
 
 				gamestate_senni = GAME_END;
 			}
-			
+
+			//攻撃(キャラ)画像とエネミーの当たり判定
+			if (((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_H) ||
+				(e->Enemy_X > GAME_Chara_Set_X + a->A_X && e->Enemy_X < GAME_Chara_Set_X + a->A_X + Chara_Size_W / ATTACK_Divide_Size_W)) &&
+				((GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
+				(e->Enemy_Y > GAME_Chara_Set_Y + a->A_Y && e->Enemy_Y < GAME_Chara_Set_Y + a->A_Y + Chara_Size_H / ATTACK_Divide_Size_H)))
+			{
+				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
+				e->Enemy_Y = RESET_ENEMY;
+
+				ATTACK_flag = false;
+				
+			}
 			//プレイ画面のとき、キャラクターを拡大して描画
 			DrawRotaGraph(GAME_Chara_Set_X + c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
 			//DrawRotaGraph(c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
@@ -329,10 +351,11 @@ void DrawGameTitle()
 	DrawExtendGraph(0, 0, GAME_WIDTH, GAME_HEIGHT, imgBack_Title, false);
 
 
-	int FontHandle_TITLE = CreateFontToHandle(NULL, 120, 3);			//文字の大きさ変更
+	int FontHandle_TITLE = CreateFontToHandle(NULL, 120, 3);	//文字の大きさ変更
+	int FontHandle_ENTER = CreateFontToHandle(NULL, 50, 3);		//文字の大きさ変更
 	//描画する文字の位置を設定
-	DrawStringToHandle(150, 100, "GAME START!", GetColor(255, 0, 255), FontHandle_TITLE);
-	DrawString(0, 20, "Enterキーを押して下さい(プレイ画面へ遷移します)", GetColor(0, 255, 255));
+	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2, "GAME START!", GetColor(255, 0, 255), FontHandle_TITLE);
+	DrawStringToHandle(50, 100, "Enterキーを押して下さい(プレイ画面へ遷移します)", GetColor(0, 255, 255), FontHandle_ENTER);
 
 	//エンターキーが押されたら
 		//
@@ -344,6 +367,7 @@ void DrawGameTitle()
 
 	// 作成したフォントデータを削除する
 	DeleteFontToHandle(FontHandle_TITLE);
+	DeleteFontToHandle(FontHandle_ENTER);
 }
 
 //プレイ画面の設定
@@ -360,7 +384,7 @@ void DrawGamePlay()
 	//DrawString(0, 20, "Spaceキーを押して下さい(エンド画面へ遷移します)", GetColor(255, 0, 255));
 	DrawStringToHandle(0, 50, "Spaceキーを押すか、敵に触れると、エンド画面へ遷移します", GetColor(255, 0, 255), FontHandle_PLAY);
 	DrawStringToHandle(0, 100, "矢印キーで移動してね！", GetColor(0, 51, 255), FontHandle_PLAY);
-	DrawStringToHandle(0, 150, "Aボタンで攻撃できるよ！\n(攻撃した画像が消えたら、もう一度打てます。当たり判定未実装ですが・・・)", GetColor(102, 0, 255), FontHandle_PLAY);
+	DrawStringToHandle(0, 150, "Aボタンで攻撃できるよ！\n(攻撃した画像が消えたら、もう一度打てます。)", GetColor(102, 0, 255), FontHandle_PLAY);
 	
 
 	//スペースキーが押されたら
@@ -387,7 +411,7 @@ void DrawGameEnd()
 	int FontHandle_END = CreateFontToHandle(NULL, 50, 3);			//文字の大きさ変更
 	DrawString(0, 20, "BackSpaceキーを押して下さい(タイトル画面へ遷移します)", GetColor(0, 255, 255));	//BackSpaceキーの説明
 	DrawString(0, 40, "Escapeキーを押して下さい(ゲームが終了します)", GetColor(255, 255, 0));		//Escapeキーの説明
-	DrawStringToHandle(200, 100, "お疲れさまでした！\nまた挑戦してね！", GetColor(0, 155, 155), FontHandle_END);
+	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2, "お疲れさまでした！\nまた挑戦してね！", GetColor(0, 155, 155), FontHandle_END);
 
 
 	
@@ -408,14 +432,14 @@ void DrawGameEnd()
 }
 
 //乱数を生成する関数
-int RANDOM()
+int WINDOW_WIDTH_RANDOM()
 {
 	std::random_device rd;
 
 	std::mt19937 mt(rd());
 
 	//1～画面サイズの横幅までを乱数で決める
-	std::uniform_int_distribution<int> random(1, GAME_WIDTH);
-	return random(mt);
+	std::uniform_int_distribution<int> WINDOW_WIDTH_RANDOM(1, GAME_WIDTH);
+	return WINDOW_WIDTH_RANDOM(mt);
 }
 
