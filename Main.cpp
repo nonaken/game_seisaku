@@ -76,14 +76,16 @@
 #define ATTACK_Divide_All	12		//アタック(キャラチップの)分割総数
 #define ENEMY_Divide_All	12		//エネミーチップの分割総数
 
+#define LIMIT_TIME 60		//制限時間
+#define PLAY_END_TIME 0		//制限時間が0秒になったらの条件式に使う
 
 //列挙型で各画面を管理
 enum GameState
 {
-	GAME_TITLE,		//タイトル画面
-	GAME_PLAY,		//プレイ画面
-	//GAME_CLEAR,
-	GAME_END		//エンド画面
+GAME_TITLE,		//タイトル画面
+GAME_PLAY,		//プレイ画面
+//GAME_CLEAR,
+GAME_END		//エンド画面
 };
 
 //ゲーム画面の遷移を管理する
@@ -104,7 +106,7 @@ int WINDOW_WIDTH_RANDOM();	//乱数を生成する関数
 //########## プログラムで最初に実行される関数 ##########
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	
+
 
 	ChangeWindowMode(GAME_WINDOW_MODECHANGE);					//ウィンドウモードに設定
 	SetGraphMode(GAME_WIDTH, GAME_HEIGHT, GAME_COLOR);			//指定の数値で画面を表示する
@@ -114,7 +116,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetMainWindowText(TEXT(GAME_WINDOW_NAME));					//タイトルの文字
 
 	if (DxLib_Init() == -1) { return -1; }						//ＤＸライブラリ初期化処理
-	
+
 	SetDrawScreen(DX_SCREEN_BACK);								//Draw系関数は裏画面に描画
 
 	FPS *fps = new FPS(GAME_FPS_SPEED);							//FPSクラスのオブジェクトを生成
@@ -126,11 +128,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	EnemyCharacter *e = new  EnemyCharacter();
 
 	int ATTACK_flag = false;	//攻撃中か攻撃していないかを判断するフラグ
-	int Enemy_flag = false;		//敵が画面外にいるのか、いないのかを判断する
+	
 
 	int Chara_Size, Attack_Size, Enemy_Size;	//画像の横と縦のサイズを調べるための変数
 	int Chara_Size_W, Chara_Size_H, Attack_Size_W, Attack_Size_H, Enemy_Size_W, Enemy_Size_H;	//画像の横、縦のサイズを記憶する
-	
+
+	//現在の時間を取得
+	int Get_Time = GetNowCount();
+
+	int FontHandle_LIMIT = CreateFontToHandle(NULL, 60, 3);	//文字の大きさ変更
+
 	LoadDivGraph(GAME_CharaImage_PLAY, CHARA_Divide_All, CHARA_Divide_Size_W, CHARA_Divide_Size_H, CHARA_SIZE_X, CHARA_SIZE_Y, &c->Handle[0]);	//キャラ画像の分割数、大きさ、ハンドル値を設定
 	LoadDivGraph(GAME_CharaImage_PLAY_ATTACK, ATTACK_Divide_All, ATTACK_Divide_Size_W, ATTACK_Divide_Size_H, ATTACK_SIZE_X, ATTACK_SIZE_Y, &a->A_Handle[0]);	//攻撃画像の分割数、大きさ、ハンドル値を設定
 	LoadDivGraph(GAME_BallImage_Play, ENEMY_Divide_All, Enemy_Divide_Size_W, Enemy_Divide_Size_H, HONE_SIZE_X, HONE_SIZE_Y, &e->Enemy_Handle[0]);	//エネミー画像の分割数、大きさ、ハンドル値を設定
@@ -138,7 +145,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Chara_Size = LoadGraph(GAME_CharaImage_PLAY);			//キャラ画像　の縦と横のサイズを取得するためロードする(すぐに捨てる)
 	Attack_Size = LoadGraph(GAME_CharaImage_PLAY_ATTACK);	//攻撃(キャラクター)画像の縦と横のサイズを取得するためロードする(すぐに捨てる)
 	Enemy_Size = LoadGraph(GAME_BallImage_Play);			//エネミー画像の縦と横のサイズを取得するためロードする(すぐに捨てる)
-	
+
 
 	GetGraphSize(Chara_Size, &Chara_Size_W, &Chara_Size_H);	//キャラ画像　の縦と横のサイズを取得
 	GetGraphSize(Attack_Size, &Attack_Size_W, &Attack_Size_H); //攻撃(キャラクター)画像の縦と横のサイズを取得
@@ -156,7 +163,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		if (ClearDrawScreen() != 0) { break; }	//画面を消去できなかったとき、強制終了
 
-		
+
 		Keyboard_Update();   //キーボードの更新
 
 		fps->Update();		//FPSの処理[更新]
@@ -164,34 +171,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//画面の切り替え管理
 		switch (gamestate_senni)
 		{
-		//タイトル画面なら
+			//タイトル画面なら
 		case GAME_TITLE:
 			DrawGameTitle();
 			break;
 
-		//プレイ画面なら
+			//プレイ画面なら
 		case GAME_PLAY:
 			DrawGamePlay();
-			
+
+			//制限時間の表示
+			DrawFormatStringToHandle(500, 0, GetColor(255, 255, 255), FontHandle_LIMIT, "LIMIT_TIME：%d秒", (LIMIT_TIME - (GetNowCount() - Get_Time) / 1000));	//文字の大きさ変更);
+
+			//制限時間が0秒になったら
+			if (LIMIT_TIME - (GetNowCount() - Get_Time) / 1000 <= PLAY_END_TIME)
+			{
+				gamestate_senni = GAME_END;
+			}
 			//エネミーが画面外にいるなら
-			if (Enemy_flag == false)
+			if (e->Enemy_flag == false)
 			{
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();
-				Enemy_flag = true;
+				e->Enemy_flag = true;
 			}
 
 			//エネミーが画面内にいるなら
-			if (Enemy_flag == true)
+			if (e->Enemy_flag == true)
 			{
 				e->Enemy_Y += ENEMY_Down_Speed;
 				DrawGraph(e->Enemy_X, e->Enemy_Y, e->Enemy_Handle[e->Enemy_soeji], TRUE);
+
 			}
 			
 			//エネミーが下画面を超えたら
 			if (e->Enemy_Y > GAME_HEIGHT)
 			{
 				e->Enemy_Y = 0;
-				Enemy_flag = false;
+				e->Enemy_flag = false;
 			}
 
 			//左矢印キーを押し続けたら
@@ -263,14 +279,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (GAME_Chara_Set_Y + a->A_Y < GAME_MIN_HEIGHT)
 			{
 				ATTACK_flag = false;
-				
 			}
 			
-			//キャラとエネミーの当たり判定
-			if (((GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_H)  ||
-				(e->Enemy_X > GAME_Chara_Set_X + c->Chara_X && e->Enemy_X < GAME_Chara_Set_X + c->Chara_X + Chara_Size_W / CHARA_Divide_Size_W)) &&
+			//キャラとエネミーの当たり判定(間違い)
+			/*
+				(GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W)
+				(e->Enemy_X > GAME_Chara_Set_X + c->Chara_X && e->Enemy_X < GAME_Chara_Set_X + c->Chara_X + Chara_Size_W / CHARA_Divide_Size_W))&&
 				((GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y  < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
 				(e->Enemy_Y > GAME_Chara_Set_Y + c->Chara_Y && e->Enemy_Y < GAME_Chara_Set_Y + c->Chara_Y + Chara_Size_H / CHARA_Divide_Size_H)))
+				*/
+
+			//キャラとエネミーの当たり判定(正解)
+			if ((GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W)&&
+				(GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))
+				
 			{
 				//接触している場合はキャラとエネミーの位置をリセットし、エンド画面に飛ぶ
 				c->Chara_X = RESET_CHARA;
@@ -282,11 +304,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				gamestate_senni = GAME_END;
 			}
 
-			//攻撃(キャラ)画像とエネミーの当たり判定
-			if (((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_H) ||
+			//攻撃(キャラ)画像とエネミーの当たり判定(間違い)
+			/*
+			if (((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) ||
 				(e->Enemy_X > GAME_Chara_Set_X + a->A_X && e->Enemy_X < GAME_Chara_Set_X + a->A_X + Chara_Size_W / ATTACK_Divide_Size_W)) &&
 				((GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
 				(e->Enemy_Y > GAME_Chara_Set_Y + a->A_Y && e->Enemy_Y < GAME_Chara_Set_Y + a->A_Y + Chara_Size_H / ATTACK_Divide_Size_H)))
+			*/
+
+			//攻撃(キャラ)画像とエネミーの当たり判定(正解)
+			if((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) &&
+			   (GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))
 			{
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
 				e->Enemy_Y = RESET_ENEMY;
@@ -439,7 +467,6 @@ int WINDOW_WIDTH_RANDOM()
 	std::mt19937 mt(rd());
 
 	//1～画面サイズの横幅までを乱数で決める
-	std::uniform_int_distribution<int> WINDOW_WIDTH_RANDOM(1, GAME_WIDTH);
+	std::uniform_int_distribution<int> WINDOW_WIDTH_RANDOM(1 + HONE_SIZE_X, GAME_WIDTH - HONE_SIZE_X);
 	return WINDOW_WIDTH_RANDOM(mt);
 }
-
