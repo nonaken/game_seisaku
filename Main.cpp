@@ -97,8 +97,12 @@ void DrawGamePlay();
 //void DrawGameClear();
 void DrawGameEnd();
 
-int WINDOW_WIDTH_RANDOM();	//乱数を生成する関数
+int WINDOW_WIDTH_RANDOM();	//エネミーのX位置乱数を生成する関数
+int RANDOM_soeji();			//エネミーの画像を乱数で生成する関数
 
+CHARA *c = new CHARA();
+ATTACK *a = new ATTACK();
+EnemyCharacter *e = new  EnemyCharacter();
 
 
 
@@ -123,10 +127,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	//動的領域を確保する
-	CHARA *c = new CHARA();
-	ATTACK *a = new ATTACK();
-	EnemyCharacter *e = new  EnemyCharacter();
-
+	
 	int ATTACK_flag = false;	//攻撃中か攻撃していないかを判断するフラグ
 	
 
@@ -183,6 +184,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//制限時間の表示
 			DrawFormatStringToHandle(500, 0, GetColor(255, 255, 255), FontHandle_LIMIT, "LIMIT_TIME：%d秒", (LIMIT_TIME - (GetNowCount() - Get_Time) / 1000));	//文字の大きさ変更);
 
+			
+			//エネミーの得点
+			for (int i = 0; i < 11; i++)
+			{
+				e->Enemy_tokuten = (e->Enemy_soeji + 1)* 10;
+			}
+			
+
 			//制限時間が0秒になったら
 			if (LIMIT_TIME - (GetNowCount() - Get_Time) / 1000 <= PLAY_END_TIME)
 			{
@@ -192,6 +201,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (e->Enemy_flag == false)
 			{
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();
+				e->Enemy_soeji = RANDOM_soeji();
 				e->Enemy_flag = true;
 			}
 
@@ -298,6 +308,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				c->Chara_X = RESET_CHARA;
 				c->Chara_Y = RESET_CHARA;
 
+
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
 				e->Enemy_Y = RESET_ENEMY;
 
@@ -317,7 +328,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			   (GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))
 			{
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
+				e->Enemy_soeji = RANDOM_soeji();
 				e->Enemy_Y = RESET_ENEMY;
+
+				e->Enemy_GOUKEI_SCORE += e->Enemy_tokuten;
 
 				ATTACK_flag = false;
 				
@@ -325,7 +339,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//プレイ画面のとき、キャラクターを拡大して描画
 			DrawRotaGraph(GAME_Chara_Set_X + c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
 			//DrawRotaGraph(c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
-			
+			DrawFormatStringToHandle(500, 0, GetColor(255, 255, 255), e->Enemy_tokuten, "総スコア：%d");
 			
 
 			break;
@@ -392,6 +406,8 @@ void DrawGameTitle()
 			gamestate_senni = GAME_PLAY;	//シーンをゲーム画面に変更
 		}
 
+		//総SCOREのリセット
+		e->Enemy_GOUKEI_SCORE = 0;
 
 	// 作成したフォントデータを削除する
 	DeleteFontToHandle(FontHandle_TITLE);
@@ -414,6 +430,9 @@ void DrawGamePlay()
 	DrawStringToHandle(0, 100, "矢印キーで移動してね！", GetColor(0, 51, 255), FontHandle_PLAY);
 	DrawStringToHandle(0, 150, "Aボタンで攻撃できるよ！\n(攻撃した画像が消えたら、もう一度打てます。)", GetColor(102, 0, 255), FontHandle_PLAY);
 	
+
+	DrawFormatString(100, 500, GetColor(255, 255, 0), "SCORE:%d", e->Enemy_GOUKEI_SCORE);
+
 
 	//スペースキーが押されたら
 	if (Keyboard_Get(KEY_INPUT_SPACE) == 1)
@@ -441,7 +460,7 @@ void DrawGameEnd()
 	DrawString(0, 40, "Escapeキーを押して下さい(ゲームが終了します)", GetColor(255, 255, 0));		//Escapeキーの説明
 	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2, "お疲れさまでした！\nまた挑戦してね！", GetColor(0, 155, 155), FontHandle_END);
 
-
+	DrawFormatString(100, 500, GetColor(255, 255, 0), "SCORE:%d", e->Enemy_GOUKEI_SCORE);
 	
 	//バックスペースキーが押されたら
 	if (Keyboard_Get(KEY_INPUT_BACK) == 1)
@@ -469,4 +488,16 @@ int WINDOW_WIDTH_RANDOM()
 	//1～画面サイズの横幅までを乱数で決める
 	std::uniform_int_distribution<int> WINDOW_WIDTH_RANDOM(1 + HONE_SIZE_X, GAME_WIDTH - HONE_SIZE_X);
 	return WINDOW_WIDTH_RANDOM(mt);
+}
+
+//乱数を生成する関数
+int RANDOM_soeji()
+{
+	std::random_device rd;
+
+	std::mt19937 mt(rd());
+
+	//1～画面サイズの横幅までを乱数で決める
+	std::uniform_int_distribution<int> RANDOM_soeji(0, ENEMY_Divide_All - 1);
+	return RANDOM_soeji(mt);
 }
