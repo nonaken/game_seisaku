@@ -106,7 +106,6 @@ EnemyCharacter *e = new  EnemyCharacter();
 
 
 
-
 //########## プログラムで最初に実行される関数 ##########
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -205,13 +204,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				e->Enemy_flag = true;
 			}
 
-			//エネミーが画面内にいるなら
-			if (e->Enemy_flag == true)
-			{
-				e->Enemy_Y += ENEMY_Down_Speed;
-				DrawGraph(e->Enemy_X, e->Enemy_Y, e->Enemy_Handle[e->Enemy_soeji], TRUE);
-
-			}
+			
 			
 			//エネミーが下画面を超えたら
 			if (e->Enemy_Y > GAME_HEIGHT)
@@ -336,10 +329,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				ATTACK_flag = false;
 				
 			}
-			//プレイ画面のとき、キャラクターを拡大して描画
-			DrawRotaGraph(GAME_Chara_Set_X + c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
+			
 			//DrawRotaGraph(c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
-			DrawFormatStringToHandle(500, 0, GetColor(255, 255, 255), e->Enemy_tokuten, "総スコア：%d");
+			
 			
 
 			break;
@@ -426,12 +418,26 @@ void DrawGamePlay()
 
 	int FontHandle_PLAY = CreateFontToHandle(NULL, 30, 3);			//文字の大きさ変更
 	//DrawString(0, 20, "Spaceキーを押して下さい(エンド画面へ遷移します)", GetColor(255, 0, 255));
+	int FontHandle_PLAY_SCORE = CreateFontToHandle(NULL, 60, 3);			//文字の大きさ変更
+
 	DrawStringToHandle(0, 50, "Spaceキーを押すか、敵に触れると、エンド画面へ遷移します", GetColor(255, 0, 255), FontHandle_PLAY);
 	DrawStringToHandle(0, 100, "矢印キーで移動してね！", GetColor(0, 51, 255), FontHandle_PLAY);
 	DrawStringToHandle(0, 150, "Aボタンで攻撃できるよ！\n(攻撃した画像が消えたら、もう一度打てます。)", GetColor(102, 0, 255), FontHandle_PLAY);
 	
 
-	DrawFormatString(100, 500, GetColor(255, 255, 0), "SCORE:%d", e->Enemy_GOUKEI_SCORE);
+	//プレイ画面のとき、キャラクターを拡大して描画
+	DrawRotaGraph(GAME_Chara_Set_X + c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
+
+	//エネミーが画面内にいるなら
+	if (e->Enemy_flag == true)
+	{
+		e->Enemy_Y += ENEMY_Down_Speed;
+		DrawGraph(e->Enemy_X, e->Enemy_Y, e->Enemy_Handle[e->Enemy_soeji], TRUE);
+	}
+
+
+	//合計スコアを表示
+	DrawFormatStringToHandle(100, 500, GetColor(255, 255, 0), FontHandle_PLAY_SCORE, "現在の総SCORE:%d", e->Enemy_GOUKEI_SCORE);
 
 
 	//スペースキーが押されたら
@@ -442,6 +448,7 @@ void DrawGamePlay()
 
 	// 作成したフォントデータを削除する
 	DeleteFontToHandle(FontHandle_PLAY);
+	DeleteFontToHandle(FontHandle_PLAY_SCORE);
 }
 
 //エンド画面の設定
@@ -456,12 +463,14 @@ void DrawGameEnd()
 	DrawExtendGraph(0, 0, GAME_WIDTH, GAME_HEIGHT, imgBack_End, false);
 
 	int FontHandle_END = CreateFontToHandle(NULL, 50, 3);			//文字の大きさ変更
+	int FontHandle_END_SCORE = CreateFontToHandle(NULL, 120, 3);			//文字の大きさ変更
+
 	DrawString(0, 20, "BackSpaceキーを押して下さい(タイトル画面へ遷移します)", GetColor(0, 255, 255));	//BackSpaceキーの説明
 	DrawString(0, 40, "Escapeキーを押して下さい(ゲームが終了します)", GetColor(255, 255, 0));		//Escapeキーの説明
 	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2, "お疲れさまでした！\nまた挑戦してね！", GetColor(0, 155, 155), FontHandle_END);
 
-	DrawFormatString(100, 500, GetColor(255, 255, 0), "SCORE:%d", e->Enemy_GOUKEI_SCORE);
-	
+	//合計スコアを表示
+	DrawFormatStringToHandle(100, 500, GetColor(255, 255, 0), FontHandle_END_SCORE, "あなたの総SCORE:%d", e->Enemy_GOUKEI_SCORE);
 	//バックスペースキーが押されたら
 	if (Keyboard_Get(KEY_INPUT_BACK) == 1)
 	{
@@ -474,8 +483,10 @@ void DrawGameEnd()
 		DxLib_End();			//ＤＸライブラリ使用の終了処理
 	}
 
+
 	//作成したフォントデータを削除する
 	DeleteFontToHandle(FontHandle_END);
+	DeleteFontToHandle(FontHandle_END_SCORE);
 }
 
 //乱数を生成する関数
