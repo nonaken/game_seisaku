@@ -14,6 +14,7 @@ ATTACK::ATTACK()
 {
 }
 
+
 ATTACK::~ATTACK()
 {
 }

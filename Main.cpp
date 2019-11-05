@@ -4,21 +4,17 @@
 #include "Keyboard.h"
 #include "CHARA.h"
 #include "Enemycharacter.h"
-
-//#include <iostream>
 #include <random>
 
-
-
+//#include <iostream>
 //#include <cstdlib>
 //#include <ctime>
-
-#include <math.h>
+//#include <math.h>
 
 //########## マクロ定義 ##########
 #define GAME_WIDTH		1280	//画面の横の大きさ(画面右端の限界値)
 #define GAME_MIN_WIDTH	 0		//画面左端の限界値
-#define GAME_HEIGHT		950		//画面の縦の大きさ
+#define GAME_HEIGHT		640		//画面の縦の大きさ
 #define GAME_MIN_HEIGHT 0		//画面上の限界値
 #define GAME_COLOR		32		//画面のカラービット
 
@@ -45,15 +41,13 @@
 #define GAME_BackImage_END		"BackImage\\pipo-battlebg020b.jpg"	//エンド画面背景画像
 
 #define GAME_Chara_Set_X		GAME_WIDTH / 2		//キャラクターの初期X位置(中央)
-#define GAME_Chara_Set_Y		700					//キャラクターの初期X位置
+#define GAME_Chara_Set_Y		GAME_HEIGHT / 2				//キャラクターの初期X位置
 
 #define CHARA_SPPED	10	//キャラクターの移動スピード
 
 #define ATTACK_SYOKI_X	50	//攻撃画像の初期X値
 #define ATTACK_SYOKI_Y	100	//攻撃画像の初期Y値
 #define GAME_ATTACK_Y	20	//攻撃速度
-
-#define ENEMY_Down_Speed 7	//エネミーの落下速度
 
 #define RESET_CHARA	0	//エネミーと衝突したら、　キャラの位置をリセット
 #define RESET_ENEMY	0	//　キャラと衝突したら、エネミーの位置をリセット
@@ -204,7 +198,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				e->Enemy_flag = true;
 			}
 
-			
+			//エネミーが画面内にいるなら
+			if (e->Enemy_flag == true)
+			{
+				e->Enemy_Y += e->Enemy_Speed;
+				DrawGraph(e->Enemy_X, e->Enemy_Y, e->Enemy_Handle[e->Enemy_soeji], TRUE);
+				//エネミーの当たり判定を表示
+				DrawBox(e->Enemy_X, e->Enemy_Y,
+					e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W,
+					e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H,
+					GetColor(255, 0, 255), FALSE);
+			}
+
+
+		
+
 			
 			//エネミーが下画面を超えたら
 			if (e->Enemy_Y > GAME_HEIGHT)
@@ -229,7 +237,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				c->Chara_soeji = 6;
 				//キャラクターのX座標が右画面外に行かないように移動する
-				if (c->Chara_X <= GAME_WIDTH - GAME_Chara_Set_X)
+				if (c->Chara_X <= GAME_WIDTH - GAME_Chara_Set_X - Chara_Size_W / CHARA_Divide_Size_W)
 				{
 					c->Chara_X += CHARA_SPPED;
 				}
@@ -250,8 +258,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (Keyboard_Get(KEY_INPUT_DOWN) >= 1)
 			{
 				c->Chara_soeji = 0;
-				//キャラクターのX座標が右画面外に行かないように移動する
-				if (c->Chara_Y + GAME_Chara_Set_Y <= GAME_HEIGHT)
+				//キャラクターのY座標が下画面外に行かないように移動する
+				if (c->Chara_Y + GAME_Chara_Set_Y + Chara_Size_H / CHARA_Divide_Size_H <= GAME_HEIGHT)
 				{
 					c->Chara_Y += CHARA_SPPED;
 				}
@@ -273,8 +281,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//攻撃していたら
 			if (ATTACK_flag == true)
 			{
-				DrawRotaGraph(GAME_Chara_Set_X + a->A_X, GAME_Chara_Set_Y + a->A_Y, 1.0, 0.0, a->A_Handle[a->A_soeji], TRUE);
+				DrawGraph(GAME_Chara_Set_X + a->A_X, GAME_Chara_Set_Y + a->A_Y, a->A_Handle[a->A_soeji], TRUE);
+
+				//攻撃の当たり判定を表示
+				DrawBox(a->A_X + GAME_Chara_Set_X, a->A_Y + GAME_Chara_Set_Y,
+					a->A_X + Attack_Size_W / ATTACK_Divide_Size_W + GAME_Chara_Set_X,
+					a->A_Y + Attack_Size_H / ATTACK_Divide_Size_H + GAME_Chara_Set_Y,
+					GetColor(255, 0, 0), FALSE);
+
 				a->A_Y -= GAME_ATTACK_Y;
+
 
 			}
 			
@@ -284,23 +300,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				ATTACK_flag = false;
 			}
 			
-			//キャラとエネミーの当たり判定(間違い)
-			/*
-				(GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W)
-				(e->Enemy_X > GAME_Chara_Set_X + c->Chara_X && e->Enemy_X < GAME_Chara_Set_X + c->Chara_X + Chara_Size_W / CHARA_Divide_Size_W))&&
-				((GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y  < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
-				(e->Enemy_Y > GAME_Chara_Set_Y + c->Chara_Y && e->Enemy_Y < GAME_Chara_Set_Y + c->Chara_Y + Chara_Size_H / CHARA_Divide_Size_H)))
-				*/
+			
+
+				//キャラの当たり判定を表示
+			DrawBox(c->Chara_X + GAME_Chara_Set_X, c->Chara_Y + GAME_Chara_Set_Y,
+				c->Chara_X + Chara_Size_W / CHARA_Divide_Size_W + GAME_Chara_Set_X,
+				c->Chara_Y + Chara_Size_H / CHARA_Divide_Size_H + GAME_Chara_Set_Y,
+				GetColor(0, 0, 255), FALSE);
 
 			//キャラとエネミーの当たり判定(正解)
-			if ((GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W)&&
-				(GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))
-				
+			/*if ((GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W)&&
+				(GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))*/
+			
+				//キャラとエネミーの当たり判定(間違い)
+			if (((GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) ||
+				(e->Enemy_X > GAME_Chara_Set_X + c->Chara_X && e->Enemy_X < GAME_Chara_Set_X + c->Chara_X + Chara_Size_W / CHARA_Divide_Size_W)) &&
+				((GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
+				(e->Enemy_Y > GAME_Chara_Set_Y + c->Chara_Y && e->Enemy_Y < GAME_Chara_Set_Y + c->Chara_Y + Chara_Size_H / CHARA_Divide_Size_H)))
 			{
 				//接触している場合はキャラとエネミーの位置をリセットし、エンド画面に飛ぶ
 				c->Chara_X = RESET_CHARA;
 				c->Chara_Y = RESET_CHARA;
-
 
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
 				e->Enemy_Y = RESET_ENEMY;
@@ -308,30 +328,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				gamestate_senni = GAME_END;
 			}
 
-			//攻撃(キャラ)画像とエネミーの当たり判定(間違い)
-			/*
+			
+
+			//攻撃(キャラ)画像とエネミーの当たり判定(正解)
+			/*if((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) &&
+			   (GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))*/
+
+
+
+			   //攻撃(キャラ)画像とエネミーの当たり判定(間違い)
 			if (((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) ||
 				(e->Enemy_X > GAME_Chara_Set_X + a->A_X && e->Enemy_X < GAME_Chara_Set_X + a->A_X + Chara_Size_W / ATTACK_Divide_Size_W)) &&
 				((GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
 				(e->Enemy_Y > GAME_Chara_Set_Y + a->A_Y && e->Enemy_Y < GAME_Chara_Set_Y + a->A_Y + Chara_Size_H / ATTACK_Divide_Size_H)))
-			*/
-
-			//攻撃(キャラ)画像とエネミーの当たり判定(正解)
-			if((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) &&
-			   (GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))
 			{
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//エネミーのX座標だけ、１～横の画面サイズ分の値を乱数でリセット
 				e->Enemy_soeji = RANDOM_soeji();
 				e->Enemy_Y = RESET_ENEMY;
 
+				//エネミーに攻撃を当てたら、得点を追加
 				e->Enemy_GOUKEI_SCORE += e->Enemy_tokuten;
 
+				//攻撃フラグを解除する(offにする)
 				ATTACK_flag = false;
-				
 			}
+
+
+			
+
 			
 			//DrawRotaGraph(c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
-			
+		
 			
 
 			break;
@@ -387,6 +414,7 @@ void DrawGameTitle()
 
 	int FontHandle_TITLE = CreateFontToHandle(NULL, 120, 3);	//文字の大きさ変更
 	int FontHandle_ENTER = CreateFontToHandle(NULL, 50, 3);		//文字の大きさ変更
+
 	//描画する文字の位置を設定
 	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2, "GAME START!", GetColor(255, 0, 255), FontHandle_TITLE);
 	DrawStringToHandle(50, 100, "Enterキーを押して下さい(プレイ画面へ遷移します)", GetColor(0, 255, 255), FontHandle_ENTER);
@@ -400,10 +428,10 @@ void DrawGameTitle()
 
 		//総SCOREのリセット
 		e->Enemy_GOUKEI_SCORE = 0;
-
-	// 作成したフォントデータを削除する
-	DeleteFontToHandle(FontHandle_TITLE);
-	DeleteFontToHandle(FontHandle_ENTER);
+		
+		// 作成したフォントデータを削除する
+		DeleteFontToHandle(FontHandle_TITLE);
+		DeleteFontToHandle(FontHandle_ENTER);
 }
 
 //プレイ画面の設定
@@ -425,19 +453,13 @@ void DrawGamePlay()
 	DrawStringToHandle(0, 150, "Aボタンで攻撃できるよ！\n(攻撃した画像が消えたら、もう一度打てます。)", GetColor(102, 0, 255), FontHandle_PLAY);
 	
 
-	//プレイ画面のとき、キャラクターを拡大して描画
-	DrawRotaGraph(GAME_Chara_Set_X + c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, 1.0, 0.0, c->Handle[c->Chara_soeji], TRUE);
+	//プレイ画面のとき、キャラクターを描画
+	DrawGraph(GAME_Chara_Set_X + c->Chara_X, GAME_Chara_Set_Y + c->Chara_Y, c->Handle[c->Chara_soeji], TRUE);
 
-	//エネミーが画面内にいるなら
-	if (e->Enemy_flag == true)
-	{
-		e->Enemy_Y += ENEMY_Down_Speed;
-		DrawGraph(e->Enemy_X, e->Enemy_Y, e->Enemy_Handle[e->Enemy_soeji], TRUE);
-	}
-
+	
 
 	//合計スコアを表示
-	DrawFormatStringToHandle(100, 500, GetColor(255, 255, 0), FontHandle_PLAY_SCORE, "現在の総SCORE:%d", e->Enemy_GOUKEI_SCORE);
+	DrawFormatStringToHandle(100, 250, GetColor(255, 255, 0), FontHandle_PLAY_SCORE, "現在の総SCORE:%d", e->Enemy_GOUKEI_SCORE);
 
 
 	//スペースキーが押されたら
@@ -467,10 +489,11 @@ void DrawGameEnd()
 
 	DrawString(0, 20, "BackSpaceキーを押して下さい(タイトル画面へ遷移します)", GetColor(0, 255, 255));	//BackSpaceキーの説明
 	DrawString(0, 40, "Escapeキーを押して下さい(ゲームが終了します)", GetColor(255, 255, 0));		//Escapeキーの説明
-	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2, "お疲れさまでした！\nまた挑戦してね！", GetColor(0, 155, 155), FontHandle_END);
+	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2 , "お疲れさまでした！\nまた挑戦してね！", GetColor(0, 155, 155), FontHandle_END);
 
 	//合計スコアを表示
-	DrawFormatStringToHandle(100, 500, GetColor(255, 255, 0), FontHandle_END_SCORE, "あなたの総SCORE:%d", e->Enemy_GOUKEI_SCORE);
+	DrawFormatStringToHandle(100, 330, GetColor(255, 255, 0), FontHandle_END_SCORE, "あなたの総SCORE:%d", e->Enemy_GOUKEI_SCORE);
+
 	//バックスペースキーが押されたら
 	if (Keyboard_Get(KEY_INPUT_BACK) == 1)
 	{
