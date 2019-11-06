@@ -88,6 +88,7 @@ GameState gamestate_senni = GAME_TITLE;	//‰æ–Ê‘JˆÚ‚ğƒRƒ“ƒgƒ[ƒ‹‚·‚é(Å‰‚Ì‰æ–Ê‚
 //Še‰æ–Ê‚ğŠÇ—‚·‚éƒvƒƒgƒ^ƒCƒvéŒ¾
 void DrawGameTitle();
 void DrawGamePlay();
+
 //void DrawGameClear();
 void DrawGameEnd();
 
@@ -150,7 +151,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DeleteGraph(Enemy_Size);//ƒGƒlƒ~[‰æ‘œ‚Ìc‚Æ‰¡‚ÌƒTƒCƒY‚ğæ“¾‚µ‚½‚çAg‚¢Ì‚Ä
 
 
-	while (TRUE)	//–³ŒÀƒ‹[ƒv
+	while (TRUE)	//–³ŒÀƒ‹[
 	{
 
 		if (ProcessMessage() != 0) { break; }	//ƒƒbƒZ[ƒWˆ—‚ÌŒ‹‰Ê‚ªƒGƒ‰[‚Ì‚Æ‚«A‹­§I—¹
@@ -202,16 +203,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			if (e->Enemy_flag == true)
 			{
 				e->Enemy_Y += e->Enemy_Speed;
-				DrawGraph(e->Enemy_X, e->Enemy_Y, e->Enemy_Handle[e->Enemy_soeji], TRUE);
-				//ƒGƒlƒ~[‚Ì“–‚½‚è”»’è‚ğ•\¦
-				DrawBox(e->Enemy_X, e->Enemy_Y,
-					e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W,
-					e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H,
-					GetColor(255, 0, 255), FALSE);
 			}
+				
+			//ƒGƒlƒ~[‚ğ•\¦
+			DrawGraph(e->Enemy_X, e->Enemy_Y, e->Enemy_Handle[e->Enemy_soeji], TRUE);
 
-
-		
+			//ƒGƒlƒ~[‚Ì“–‚½‚è”»’è‚ğ•\¦
+			DrawBox(e->Enemy_X, e->Enemy_Y,
+				e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W,
+				e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H,
+				GetColor(255, 0, 255), FALSE);
 
 			
 			//ƒGƒlƒ~[‚ª‰º‰æ–Ê‚ğ’´‚¦‚½‚ç
@@ -281,18 +282,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			//UŒ‚‚µ‚Ä‚¢‚½‚ç
 			if (ATTACK_flag == true)
 			{
-				DrawGraph(GAME_Chara_Set_X + a->A_X, GAME_Chara_Set_Y + a->A_Y, a->A_Handle[a->A_soeji], TRUE);
+				
 
 				//UŒ‚‚Ì“–‚½‚è”»’è‚ğ•\¦
-				DrawBox(a->A_X + GAME_Chara_Set_X, a->A_Y + GAME_Chara_Set_Y,
+				DrawBox(a->A_X + GAME_Chara_Set_X, a->A_Y + GAME_Chara_Set_Y, 
 					a->A_X + Attack_Size_W / ATTACK_Divide_Size_W + GAME_Chara_Set_X,
 					a->A_Y + Attack_Size_H / ATTACK_Divide_Size_H + GAME_Chara_Set_Y,
 					GetColor(255, 0, 0), FALSE);
 
+				//UŒ‚‰æ‘œ‚ğã‚ÉˆÚ“®
 				a->A_Y -= GAME_ATTACK_Y;
+
+				//UŒ‚‰æ‘œ‚ğ•`‰æ
+				DrawGraph(GAME_Chara_Set_X + a->A_X, GAME_Chara_Set_Y + a->A_Y, a->A_Handle[a->A_soeji], TRUE);
 
 
 			}
+
+			
 			
 			//UŒ‚‚µ‚½‰æ‘œ‚ªã‰æ–Ê‚ğ’´‚¦‚½‚ç
 			if (GAME_Chara_Set_Y + a->A_Y < GAME_MIN_HEIGHT)
@@ -308,11 +315,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				c->Chara_Y + Chara_Size_H / CHARA_Divide_Size_H + GAME_Chara_Set_Y,
 				GetColor(0, 0, 255), FALSE);
 
-			//ƒLƒƒƒ‰‚ÆƒGƒlƒ~[‚Ì“–‚½‚è”»’è(³‰ğ)
-			/*if ((GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W)&&
-				(GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))*/
 			
-				//ƒLƒƒƒ‰‚ÆƒGƒlƒ~[‚Ì“–‚½‚è”»’è(ŠÔˆá‚¢)
+				//ƒLƒƒƒ‰‚ÆƒGƒlƒ~[‚Ì“–‚½‚è”»’è
 			if (((GAME_Chara_Set_X + c->Chara_X > e->Enemy_X && GAME_Chara_Set_X + c->Chara_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) ||
 				(e->Enemy_X > GAME_Chara_Set_X + c->Chara_X && e->Enemy_X < GAME_Chara_Set_X + c->Chara_X + Chara_Size_W / CHARA_Divide_Size_W)) &&
 				((GAME_Chara_Set_Y + c->Chara_Y > e->Enemy_Y && GAME_Chara_Set_Y + c->Chara_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
@@ -328,19 +332,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				gamestate_senni = GAME_END;
 			}
 
-			
-
-			//UŒ‚(ƒLƒƒƒ‰)‰æ‘œ‚ÆƒGƒlƒ~[‚Ì“–‚½‚è”»’è(³‰ğ)
-			/*if((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) &&
-			   (GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H))*/
 
 
-
-			   //UŒ‚(ƒLƒƒƒ‰)‰æ‘œ‚ÆƒGƒlƒ~[‚Ì“–‚½‚è”»’è(ŠÔˆá‚¢)
+			   //UŒ‚(ƒLƒƒƒ‰)‰æ‘œ‚ÆƒGƒlƒ~[‚Ì“–‚½‚è”»’è
 			if (((GAME_Chara_Set_X + a->A_X > e->Enemy_X && GAME_Chara_Set_X + a->A_X < e->Enemy_X + Enemy_Size_W / Enemy_Divide_Size_W) ||
 				(e->Enemy_X > GAME_Chara_Set_X + a->A_X && e->Enemy_X < GAME_Chara_Set_X + a->A_X + Chara_Size_W / ATTACK_Divide_Size_W)) &&
 				((GAME_Chara_Set_Y + a->A_Y > e->Enemy_Y && GAME_Chara_Set_Y + a->A_Y < e->Enemy_Y + Enemy_Size_H / Enemy_Divide_Size_H) ||
-				(e->Enemy_Y > GAME_Chara_Set_Y + a->A_Y && e->Enemy_Y < GAME_Chara_Set_Y + a->A_Y + Chara_Size_H / ATTACK_Divide_Size_H)))
+				(e->Enemy_Y > GAME_Chara_Set_Y + a->A_Y && e->Enemy_Y < GAME_Chara_Set_Y + a->A_Y + Chara_Size_H / ATTACK_Divide_Size_H))
+				&&
+				//UŒ‚‰æ‘œ‚ª•\¦‚³‚ê‚Ä‚¢‚½‚ç
+				ATTACK_flag == true)
 			{
 				e->Enemy_X = WINDOW_WIDTH_RANDOM();	//ƒGƒlƒ~[‚ÌXÀ•W‚¾‚¯A‚P`‰¡‚Ì‰æ–ÊƒTƒCƒY•ª‚Ì’l‚ğ—”‚ÅƒŠƒZƒbƒg
 				e->Enemy_soeji = RANDOM_soeji();
@@ -365,6 +366,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//case GAME_CLEAR:
 			//DrawGameClear();
 			//break;
+
 
 		//ƒGƒ“ƒh‰æ–Ê‚È‚ç
 		case GAME_END:
@@ -492,7 +494,7 @@ void DrawGameEnd()
 	DrawStringToHandle(GAME_WIDTH_CENTER_X / 2, GAME_HEIGHT_CENTER_Y / 2 , "‚¨”æ‚ê‚³‚Ü‚Å‚µ‚½I\n‚Ü‚½’§í‚µ‚Ä‚ËI", GetColor(0, 155, 155), FontHandle_END);
 
 	//‡ŒvƒXƒRƒA‚ğ•\¦
-	DrawFormatStringToHandle(100, 330, GetColor(255, 255, 0), FontHandle_END_SCORE, "‚ ‚È‚½‚Ì‘SCORE:%d", e->Enemy_GOUKEI_SCORE);
+	DrawFormatStringToHandle(50, 330, GetColor(255, 255, 0), FontHandle_END_SCORE, "‚ ‚È‚½‚Ì‘SCORE:%d", e->Enemy_GOUKEI_SCORE);
 
 	//ƒoƒbƒNƒXƒy[ƒXƒL[‚ª‰Ÿ‚³‚ê‚½‚ç
 	if (Keyboard_Get(KEY_INPUT_BACK) == 1)
